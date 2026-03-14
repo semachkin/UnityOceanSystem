@@ -1,0 +1,49 @@
+#pragma kernel GenerateNoise
+
+#define NUMTHREADS 8
+
+RWTexture2D<float2> Result;
+
+int Seed;
+
+uint PCG3D(uint3 v)
+{
+    v = v * 1664525 + 1013904223;
+    v.x += v.y * v.z;
+    v.y += v.z * v.x;
+    v.z += v.x * v.y;
+    v ^= v >> 16;
+    v.x += v.y * v.z;
+    v.y += v.z * v.x;
+    v.z += v.x * v.y;
+    
+    return v.x;
+}
+
+float Random01(uint2 id, uint seedOffset)
+{
+    uint3 seed = uint3(id.x, id.y, seedOffset);
+    uint hash = PCG3D(seed);
+    return float(hash) / 0xFFFFFFFF;
+}
+
+float2 BoxMuller(float u1, float u2)
+{
+    float radius = sqrt(-2.0f * log(1.0f - u1));
+    float angle = 2.0f * 3.14159265359f * u2;
+    
+    float2 result;
+    sincos(angle, result.y, result.x);
+    return result * radius;
+}
+
+[numthreads(NUMTHREADS,NUMTHREADS,1)]
+void GenerateNoise (uint3 id : SV_DispatchThreadID)
+{
+    float u1 = Random01(id.xy, Seed);
+    float u2 = Random01(id.xy, Seed + 1);
+    
+    float2 gaussian = BoxMuller(u1, u2);
+    
+    Result[id.xy] = gaussian;
+}

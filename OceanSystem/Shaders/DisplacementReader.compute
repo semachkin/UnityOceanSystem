@@ -1,0 +1,46 @@
+#pragma kernel SampleHeights
+
+StructuredBuffer<float2> InputPositions;
+RWStructuredBuffer<float> OutputHeights;
+RWStructuredBuffer<float2> OutputSlope;
+
+Texture2D<float4> Displacement_c0;
+Texture2D<float4> Displacement_c1;
+Texture2D<float4> Displacement_c2;
+
+Texture2D<float4> Derivatives_c0;
+Texture2D<float4> Derivatives_c1;
+Texture2D<float4> Derivatives_c2;
+
+SamplerState sampler_Displacement_c0;
+SamplerState sampler_Displacement_c1;
+SamplerState sampler_Displacement_c2;
+
+SamplerState sampler_Derivatives_c0;
+SamplerState sampler_Derivatives_c1;
+SamplerState sampler_Derivatives_c2;
+
+float Length_c0;
+float Length_c1;
+float Length_c2;
+
+[numthreads(16, 1, 1)]
+void SampleHeights(uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x;
+    
+    float2 worldUV = InputPositions[index];
+
+    float3 displacement = (float3)Displacement_c0.SampleLevel(sampler_Displacement_c0, worldUV / Length_c0, 0) +
+        (float3)Displacement_c1.SampleLevel(sampler_Displacement_c1, worldUV / Length_c1, 0) +
+        (float3)Displacement_c2.SampleLevel(sampler_Displacement_c2, worldUV / Length_c2, 0);
+
+    float4 derivatives = (float4)Derivatives_c0.SampleLevel(sampler_Derivatives_c0, worldUV / Length_c0, 0) +
+        (float4)Derivatives_c1.SampleLevel(sampler_Derivatives_c1, worldUV / Length_c1, 0) +
+        (float4)Derivatives_c2.SampleLevel(sampler_Derivatives_c2, worldUV / Length_c2, 0);
+
+    float2 slope = float2(derivatives.x / (1 + derivatives.z), derivatives.y / (1 + derivatives.w));
+
+    OutputHeights[index] = displacement.y;
+    OutputSlope[index] = slope;
+}
