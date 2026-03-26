@@ -13,8 +13,6 @@ public class OceanGeometry : MonoBehaviour
     bool showMaterialLods;
     [SerializeField]
     public int oceanLevel;
-    [SerializeField]
-    float density;
 
     [SerializeField]
     float lengthScale = 10;

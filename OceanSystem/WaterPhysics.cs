@@ -14,6 +14,8 @@ public class WaterPhysics : MonoBehaviour
     public float density;
     [Range(0, 10)]
     public float damping;
+    [Range(0, 1)]
+    public float displacement;
 
     [HideInInspector]
     public float currentHeight;
@@ -41,12 +43,14 @@ public class WaterPhysics : MonoBehaviour
 
             float volume = rb.mass / density;
 
+            currentNormal = Vector3.Lerp(currentNormal, Vector3.up, 1 - displacement);
+
             Vector3 force = currentNormal * depth * volume * Gravity;
             
             float vn = Vector3.Dot(rb.velocity, currentNormal);
             Vector3 dapmingForce = -currentNormal * vn * damping;
 
-            Vector3 dragForce = -rb.velocity * rb.drag;
+            Vector3 dragForce = -rb.velocity * rb.angularDrag;
 
             force = Vector3.ClampMagnitude(force, volume * Gravity);
 
